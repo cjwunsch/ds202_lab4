@@ -1,0 +1,170 @@
+---
+title: "Lab 4"
+author: "Carter Wunsch"
+date: "10/11/2020"
+output: html_document
+---
+
+```{r}
+library(readxl)
+defense <- read_excel('cyclonesFootball2019.xlsx', sheet = "Defensive")
+offense <- read_excel('cyclonesFootball2019.xlsx', sheet = "Offensive")
+biography <- read_excel('cyclonesFootball2019.xlsx', sheet = "Biography")
+```
+
+Part 1
+
+Question 1
+
+```{r}
+defClean <- defense
+defClean$Name <- as.factor(defClean$Name)
+defClean$Opponent_Opponent <- as.factor(defClean$Opponent_Opponent)
+
+offClean <- offense
+offClean$Name <- as.factor(offClean$Name)
+offClean$Opponent_Opponent <- as.factor(offClean$Opponent_Opponent)
+
+str(defClean)
+str(offClean)
+
+head(defClean)
+head(offClean)
+```
+
+Question 2
+
+```{r}
+x <- c(3:11)
+bioClean <- biography
+for (val in x) {
+  defClean[[val]] <- as.numeric(defClean[[val]])
+}
+bioClean$Weight <- as.numeric(bioClean$Weight)
+str(defClean)
+str(bioClean)
+```
+
+Question 3
+
+```{r}
+for (index in 1:nrow(bioClean)){
+  feet <- as.numeric(unlist(strsplit(bioClean$Height[index], "-", fixed = TRUE))[1])
+  inches <- as.numeric(unlist(strsplit(bioClean$Height[index], "-", fixed = TRUE))[2])
+  bioClean$Height[index] <- (feet * 12) + inches
+}
+bioClean$Height <- as.numeric(bioClean$Height)
+str(bioClean)
+```
+
+Part 2:
+
+Question 1
+
+```{r}
+library(tidyr)
+defClean <- pivot_longer(defClean, 3:11, names_to = 'stat', values_to = 'score')
+head(defClean)
+```
+
+Question 2
+
+```{r}
+defClean$score <- as.numeric(defClean$score)
+
+ts <- defClean[defClean$stat == 'Tackles_Solo', ]
+mean(ts$score)
+sum(ts$score)
+
+ta <- defClean[defClean$stat == 'Tackles_ASST', ]
+mean(ta$score)
+sum(ta$score)
+
+tfl <- defClean[defClean$stat == 'Tackles_TFL', ]
+mean(tfl$score)
+sum(tfl$score)
+
+tsk <- defClean[defClean$stat == 'Tackles_Sack', ]
+mean(tsk$score)
+sum(tsk$score)
+
+tff <- defClean[defClean$stat == 'Turnover_FF', ]
+mean(tff$score)
+sum(tff$score)
+
+tfr <- defClean[defClean$stat == 'Turnover_FR', ]
+mean(tfr$score)
+sum(tfr$score)
+
+ti <- defClean[defClean$stat == 'Turnover_INT', ]
+mean(ti$score)
+sum(ti$score)
+
+pqbh <- defClean[defClean$stat == 'Pass_QBH', ]
+mean(pqbh$score)
+sum(pqbh$score)
+
+ppb <- defClean[defClean$stat == 'Pass_PB', ]
+mean(ppb$score)
+sum(ppb$score)
+```
+
+The rarest defensive plays are interceptions (mean = 0.019, sum = 10), turnover frs (mean = 0.0139, sum = 7), and turnover ffs (mean = 0.0119, sum = 6).
+
+Question 3
+```{r}
+library(ggplot2)
+library(dplyr)
+iowa <- defClean[defClean$Opponent_Opponent == "Iowa" & defClean$stat == "Tackles_Solo", ]
+nd <- defClean[defClean$Opponent_Opponent == "Notre Dame" & defClean$stat == "Tackles_Solo", ]
+df3 <- inner_join(x = iowa, y = nd, by = "Name")
+df3
+ggplot(df3, aes(x = score.x, y = score.y)) + geom_point()
+```
+
+They did better against Notre Dame because there are more solo tackles against them. You can see this by looking at Notre Dame tackles (score.y) in the scatter plot.
+
+Question 4
+```{r}
+df4 <- separate(bioClean, Hometown, into = c("City", "State"), sep = ',')
+head(df4)
+```
+
+Question 5
+```{r}
+table(df4$State)
+```
+
+Part 3:
+
+Question 1
+
+```{r}
+offDF <- inner_join(bioClean, offClean, by = "Name")
+defDF <- inner_join(bioClean, defClean, by = "Name")
+offDF <- separate(offDF, Hometown, into = c("City", "State"), sep = ',')
+defDF <- separate(defDF, Hometown, into = c("City", "State"), sep = ',')
+
+offDF <- offDF[offDF$Opponent_Opponent == "Iowa", ]
+defDF <- defDF[defDF$Opponent_Opponent == "Iowa" & defDF$stat == "Tackles_Solo", ]
+table(offDF$State)
+table(defDF$State)
+```
+
+Question 2
+```{r}
+bp <- offClean[offClean$Name == "Purdy, Brock", ]
+bp$offscore = c(29,17,72,21,49,38,34,27,41,23,41,17,9)
+ggplot(bp, aes(x = Passing_YDS, y = offscore)) + geom_point()
+bp$Passing_YDS <- as.numeric(bp$Passing_YDS)
+cor(bp$Passing_YDS, bp$offscore)
+```
+
+This scatter plot and correlation coefficient show that when Brock Purdy has more passing yards, the team scores more points. This is apparent from the positive relationship between the two variables in the graph and a significant correlation of 0.48 between the two variables.
+
+Question 3
+```{r}
+off18 <- read_excel('cyclonesFootball2018.xlsx', sheet = "Offensive")
+df3 <- inner_join(off18, offClean, by = "Name")
+#Couldn't figure out how to join the two tables correctly. I was trying to join the two different years by player name, but I keep getting repeat values in the merged tables.
+```
